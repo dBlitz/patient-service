@@ -1,37 +1,24 @@
- using hostname.
-
-[code language="java"]
 node {
 
-    withMaven(maven:'maven') {
+    checkout scm
 
-        stage('Checkout') {
-            git url: 'https://github.com/dblitz/microservices-emr.git', credentialsId: 'dblitz', branch: 'master'
-        }
+    env.DOCKER_API_VERSION="1.23"
+    
+    sh "git rev-parse --short HEAD > commit-id"
 
-        stage('Build') {
-            sh 'mvn clean install'
+    tag = readFile('commit-id').replace("\n", "").replace("\r", "")
+    appName = "patient-service"
+    registryHost = "minikube/"
+    imageName = "${registryHost}${appName}:${tag}"
+    env.BUILDIMG=imageName
 
-            def pom = readMavenPom file:'pom.xml'
-            print pom.version
-            env.version = pom.version
-        }
+    stage "Build"
+    
+        sh "docker build -t ${imageName} ."
 
-        stage('Image') {
-            dir ('patient-service') {
-                def app = docker.build "localhost:5000/patient-service:${env.version}"
-                app.push()
-            }
-        }
+    stage "Deploy"
 
-        stage ('Run') {
-            docker.image("localhost:5000/patient-service:${env.version}").run('-p 2222:2222 -h patient --name patient --link discovery')
-        }
-
-        stage ('Final') {
-            build job: 'appointment-service-pipeline', wait: false
-        }      
-
-    }
+        sh "sed 's#127.0.0.1:30400/patient-service:latest#'$BUILDIMG'#' k8s/deployment.yaml | kubectl apply -f -"
+        sh "kubectl rollout status deployment/patient-service"
 
 }
