@@ -1,0 +1,11 @@
+
+server:  
+  port: ${PORT:2222}
+
+spring:  
+  application:
+    name: patient-service
+  logging:
+    level:
+      org.springframework.cloud.contract: TRACE
+            
