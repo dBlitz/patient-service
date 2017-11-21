@@ -110,6 +110,22 @@
 				<version>2.20.1</version>
 			</plugin>
 
+			<plugin>
+			    <groupId>com.spotify</groupId>
+			    <artifactId>docker-maven-plugin</artifactId>
+			    <version>0.3.9</version>
+			    <configuration>
+			        <imageName>patient-service</imageName>
+			        <dockerDirectory>src/main/docker</dockerDirectory>
+			        <resources>
+			            <resource>
+			                <targetPath>/</targetPath>
+			                <directory>${project.build.directory}</directory>
+			                <include>${project.build.finalName}.war</include>
+			            </resource>
+			        </resources>
+			    </configuration>
+			</plugin>
 
 		</plugins>
 	</build>
